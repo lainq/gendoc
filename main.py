@@ -116,10 +116,22 @@ def generate_markdown(function: Function, result: ParserResult):
         markdown += f"*{arg_name.name}*"
         if index != len(result.arguments) - 1:
             markdown += ", "
-    markdown += "\n"
-    markdown += result.body if result.body else result.summary
-
     markdown += ")"
+
+    markdown += "\n"
+    markdown += result.body + "\n" if result.body else result.summary + "\n"
+
+    markdown += "\nParameters:\n" if len(result.args) > 0 else ""
+    for arg in result.args:
+        name, details = arg
+        markdown += f"`{name}`: {details}\n"
+
+    markdown += "\nReturn:\n" if len(result.returns) > 0 else ""
+    for return_value in result.returns:
+        type_, details = return_value
+        markdown += f"`{type_}: {details}`"
+
+    markdown += "\n"
     return markdown
 
 
@@ -138,6 +150,8 @@ with open("test.py", "r") as reader:
     _ast = ast.parse(content)
 
     functions = get_function_bodies(_ast.body)
+
+    output = ""
     for function in functions:
         if not function.is_public:
             continue
@@ -146,4 +160,6 @@ with open("test.py", "r") as reader:
         result.arguments = function.get_arguments()
 
         markdown = generate_markdown(function, result)
-        print(markdown)
+        output += markdown
+    with open("out.md", "w") as writer:
+        writer.write(output) 
