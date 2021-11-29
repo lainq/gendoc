@@ -1,5 +1,5 @@
-def hello(eff,	eded=423, ffewf=434, *args, **kwargs):
-	"""Example function with types documented in the docstring.
+def hello(eff, eded=423, ffewf=434, *args, **kwargs):
+    """Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
     return types are annotated according to `PEP 484`_, they do not need to be
@@ -16,8 +16,9 @@ def hello(eff,	eded=423, ffewf=434, *args, **kwargs):
         https://www.python.org/dev/peps/pep-0484/
 
     """
-	print("hello world")
+    print("hello world")
 
-class ThisIsAClass():
-	def lol():
-		pass
+
+class ThisIsAClass:
+    def lol():
+        pass
