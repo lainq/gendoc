@@ -1,4 +1,4 @@
-def hello():
+def hello(eff,	eded=423, ffewf=434, *args, **kwargs):
 	"""Example function with types documented in the docstring.
 
     `PEP 484`_ type annotations are supported. If attribute, parameter, and
