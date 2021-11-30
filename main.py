@@ -4,6 +4,7 @@ import os
 
 from typing import Callable, List, Tuple, Dict
 
+
 class ParserResult:
     summary = ""
     body = ""
@@ -66,6 +67,7 @@ class DocstringParser:
             self.result.body = block
         return self.result
 
+
 class FunctionArgument:
     def __init__(self, name, default_value):
         self.name = name
@@ -73,6 +75,7 @@ class FunctionArgument:
 
     def __repr__(self):
         return f"<{self.name}:{self.default_value}>"
+
 
 class Function(object):
     def __init__(self, node, parent=None):
@@ -107,6 +110,7 @@ class Function(object):
     def __repr__(self):
         return self.__str__()
 
+
 def generate_markdown(function: Function, result: ParserResult):
     markdown = f"**{function.node.name}**("
     for index, arg_name in enumerate(result.arguments):
@@ -131,6 +135,7 @@ def generate_markdown(function: Function, result: ParserResult):
     markdown += "\n<hr>\n\n"
     return markdown
 
+
 def get_function_bodies(body, parent=None):
     functions = []
     for node in body:
@@ -140,6 +145,7 @@ def get_function_bodies(body, parent=None):
             functions += get_function_bodies(node.body, node)
     return functions
 
+
 def create_error(message, suggestion=None, fatal=True):
     print(f"[ERROR]: {message}")
     if suggestion:
@@ -147,7 +153,8 @@ def create_error(message, suggestion=None, fatal=True):
     if fatal:
         sys.exit()
 
-def parse_arguments(arguments:List[str]) -> Tuple[str, Dict[str, str]]:
+
+def parse_arguments(arguments: List[str]) -> Tuple[str, Dict[str, str]]:
     command, parameters = "", {}
     for index, argument in enumerate(arguments):
         if index == 0:
@@ -163,7 +170,12 @@ def parse_arguments(arguments:List[str]) -> Tuple[str, Dict[str, str]]:
         parameters.setdefault(key, value)
     return command, parameters
 
-def generate_docs(files:List[str], parameters:Dict[str, str], docs_dir=os.path.join(os.getcwd(), "docs")):
+
+def generate_docs(
+    files: List[str],
+    parameters: Dict[str, str],
+    docs_dir=os.path.join(os.getcwd(), "docs"),
+):
     if not os.path.isdir(docs_dir):
         os.mkdir(docs_dir)
     for filename in files:
@@ -171,7 +183,7 @@ def generate_docs(files:List[str], parameters:Dict[str, str], docs_dir=os.path.j
             content = source_reader.read()
             _ast = ast.parse(content)
             functions = get_function_bodies(_ast.body)
-            
+
             output = ""
             for function in functions:
                 if not function.is_public:
@@ -179,17 +191,20 @@ def generate_docs(files:List[str], parameters:Dict[str, str], docs_dir=os.path.j
                 parser = DocstringParser(function.get_docstrings())
                 result = parser.parse()
                 result.arguments = function.get_arguments()
-                
+
                 markdown = generate_markdown(function, result)
                 output += markdown
             output_filename = os.path.join(docs_dir, filename.split(".")[0] + ".md")
-            if os.path.exists(output_filename) and not(parameters.get("yes")):
-                overrite_file = input(f"Overrite {output_filename} [y/n] ").strip().lower() in ["y", "yes"]
+            if os.path.exists(output_filename) and not (parameters.get("yes")):
+                overrite_file = input(
+                    f"Overrite {output_filename} [y/n] "
+                ).strip().lower() in ["y", "yes"]
                 if not overrite_file:
                     print(f"Skipping {filename}")
                     continue
             with open(output_filename, "w") as file_writer:
                 file_writer.write(output)
+
 
 def main():
     arguments = sys.argv[1:]
@@ -199,13 +214,19 @@ def main():
     else:
         if not os.path.exists(command):
             create_error(f"{command}, file not found :/")
-        output_dir = parameters.get("out") or os.path.join(command if os.path.isdir(command) else os.path.dirname(command), "docs")
+        output_dir = parameters.get("out") or os.path.join(
+            command if os.path.isdir(command) else os.path.dirname(command), "docs"
+        )
         if os.path.isfile(command):
             generate_docs([command], parameters, output_dir)
         elif os.path.isdir(command):
             # TODO: recursive
-            generate_docs(list(filter(lambda file:os.path.isfile(file), os.listdir(command))), parameters, output_dir)
-        
+            generate_docs(
+                list(filter(lambda file: os.path.isfile(file), os.listdir(command))),
+                parameters,
+                output_dir,
+            )
+
+
 if __name__ == "__main__":
     main()
-
