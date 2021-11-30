@@ -163,8 +163,7 @@ def parse_arguments(arguments:List[str]) -> Tuple[str, Dict[str, str]]:
         parameters.setdefault(key, value)
     return command, parameters
 
-def generate_docs(files:List[str], cwd:str, parameters:Dict[str, str]):
-    docs_dir = os.path.join(cwd, "docs")
+def generate_docs(files:List[str], parameters:Dict[str, str], docs_dir=os.path.join(os.getcwd(), "docs")):
     if not os.path.isdir(docs_dir):
         os.mkdir(docs_dir)
     for filename in files:
@@ -200,27 +199,13 @@ def main():
     else:
         if not os.path.exists(command):
             create_error(f"{command}, file not found :/")
+        output_dir = parameters.get("out") or os.path.join(command if os.path.isdir(command) else os.path.dirname(command), "docs")
         if os.path.isfile(command):
-            generate_docs([command], os.getcwd(), parameters)
+            generate_docs([command], parameters, output_dir)
+        elif os.path.isdir(command):
+            # TODO: recursive
+            generate_docs(list(filter(lambda file:os.path.isfile(file), os.listdir(command))), parameters, output_dir)
         
 if __name__ == "__main__":
     main()
 
-# with open("test.py", "r") as reader:
-#     content = reader.read()
-#     _ast = ast.parse(content)
-
-#     functions = get_function_bodies(_ast.body)
-
-#     output = ""
-#     for function in functions:
-#         if not function.is_public:
-#             continue
-#         parser = DocstringParser(function.get_docstrings())
-#         result = parser.parse()
-#         result.arguments = function.get_arguments()
-
-#         markdown = generate_markdown(function, result)
-#         output += markdown
-#     with open("out.md", "w") as writer:
-#         writer.write(output) 
