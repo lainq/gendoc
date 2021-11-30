@@ -121,14 +121,14 @@ def generate_markdown(function: Function, result: ParserResult):
     markdown += "\nParameters:\n" if len(result.args) > 0 else ""
     for arg in result.args:
         name, details = arg
-        markdown += f"`{name}`: {details}\n"
+        markdown += f"\n`{name}`: {details}\n"
 
     markdown += "\nReturn:\n" if len(result.returns) > 0 else ""
     for return_value in result.returns:
         type_, details = return_value
-        markdown += f"`{type_}: {details}`"
+        markdown += f"\n`{type_}`: {details}\n"
 
-    markdown += "\n"
+    markdown += "\n<hr>\n\n"
     return markdown
 
 def get_function_bodies(body, parent=None):
