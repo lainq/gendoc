@@ -1,14 +1,14 @@
 import ast
+import sys
+import os
 
-from typing import Callable, List, Tuple
-
+from typing import Callable, List, Tuple, Dict
 
 class ParserResult:
     summary = ""
     body = ""
     args = []
     returns = []
-
     arguments = []
 
     def __str__(self):
@@ -66,7 +66,6 @@ class DocstringParser:
             self.result.body = block
         return self.result
 
-
 class FunctionArgument:
     def __init__(self, name, default_value):
         self.name = name
@@ -74,7 +73,6 @@ class FunctionArgument:
 
     def __repr__(self):
         return f"<{self.name}:{self.default_value}>"
-
 
 class Function(object):
     def __init__(self, node, parent=None):
@@ -109,7 +107,6 @@ class Function(object):
     def __repr__(self):
         return self.__str__()
 
-
 def generate_markdown(function: Function, result: ParserResult):
     markdown = f"**{function.node.name}**("
     for index, arg_name in enumerate(result.arguments):
@@ -134,7 +131,6 @@ def generate_markdown(function: Function, result: ParserResult):
     markdown += "\n"
     return markdown
 
-
 def get_function_bodies(body, parent=None):
     functions = []
     for node in body:
@@ -144,22 +140,87 @@ def get_function_bodies(body, parent=None):
             functions += get_function_bodies(node.body, node)
     return functions
 
+def create_error(message, suggestion=None, fatal=True):
+    print(f"[ERROR]: {message}")
+    if suggestion:
+        print(f"[TRY]: {suggestion}")
+    if fatal:
+        sys.exit()
 
-with open("test.py", "r") as reader:
-    content = reader.read()
-    _ast = ast.parse(content)
-
-    functions = get_function_bodies(_ast.body)
-
-    output = ""
-    for function in functions:
-        if not function.is_public:
+def parse_arguments(arguments:List[str]) -> Tuple[str, Dict[str, str]]:
+    command, parameters = "", {}
+    for index, argument in enumerate(arguments):
+        if index == 0:
+            command = argument
             continue
-        parser = DocstringParser(function.get_docstrings())
-        result = parser.parse()
-        result.arguments = function.get_arguments()
+        is_valid_argument = argument.startswith("--")
+        if not is_valid_argument:
+            create_error(f"[ERROR]: {argument} is not a valid argument")
+        slices = argument.split("=")
+        key, value = slices[0][2:], "=".join(slices[1:])
+        if len(value) == 0:
+            value = True
+        parameters.setdefault(key, value)
+    return command, parameters
 
-        markdown = generate_markdown(function, result)
-        output += markdown
-    with open("out.md", "w") as writer:
-        writer.write(output) 
+def generate_docs(files:List[str], cwd:str, parameters:Dict[str, str]):
+    docs_dir = os.path.join(cwd, "docs")
+    if not os.path.isdir(docs_dir):
+        os.mkdir(docs_dir)
+    for filename in files:
+        with open(filename, "r") as source_reader:
+            content = source_reader.read()
+            _ast = ast.parse(content)
+            functions = get_function_bodies(_ast.body)
+            
+            output = ""
+            for function in functions:
+                if not function.is_public:
+                    continue
+                parser = DocstringParser(function.get_docstrings())
+                result = parser.parse()
+                result.arguments = function.get_arguments()
+                
+                markdown = generate_markdown(function, result)
+                output += markdown
+            output_filename = os.path.join(docs_dir, filename.split(".")[0] + ".md")
+            if os.path.exists(output_filename) and not(parameters.get("yes")):
+                overrite_file = input(f"Overrite {output_filename} [y/n] ").strip().lower() in ["y", "yes"]
+                if not overrite_file:
+                    print(f"Skipping {filename}")
+                    continue
+            with open(output_filename, "w") as file_writer:
+                file_writer.write(output)
+
+def main():
+    arguments = sys.argv[1:]
+    command, parameters = parse_arguments(arguments)
+    if command == "help":
+        print("Helping...")
+    else:
+        if not os.path.exists(command):
+            create_error(f"{command}, file not found :/")
+        if os.path.isfile(command):
+            generate_docs([command], os.getcwd(), parameters)
+        
+if __name__ == "__main__":
+    main()
+
+# with open("test.py", "r") as reader:
+#     content = reader.read()
+#     _ast = ast.parse(content)
+
+#     functions = get_function_bodies(_ast.body)
+
+#     output = ""
+#     for function in functions:
+#         if not function.is_public:
+#             continue
+#         parser = DocstringParser(function.get_docstrings())
+#         result = parser.parse()
+#         result.arguments = function.get_arguments()
+
+#         markdown = generate_markdown(function, result)
+#         output += markdown
+#     with open("out.md", "w") as writer:
+#         writer.write(output) 
