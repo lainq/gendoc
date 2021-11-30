@@ -1,6 +1,7 @@
 import ast
 import sys
 import os
+import re
 
 from typing import Callable, List, Tuple, Dict
 
@@ -166,7 +167,7 @@ def parse_arguments(arguments: List[str]) -> Tuple[str, Dict[str, str]]:
         slices = argument.split("=")
         key, value = slices[0][2:], "=".join(slices[1:])
         if len(value) == 0:
-            value = True
+            value = "True"
         parameters.setdefault(key, value)
     return command, parameters
 
@@ -206,6 +207,46 @@ def generate_docs(
                 file_writer.write(output)
 
 
+class Gitignore:
+    def __init__(self, dirname):
+        self.patterns = self.get_gitignore_patterns(dirname)
+        self.patterns.append(".git/")
+
+    def get_gitignore_patterns(self, directory: str) -> List[str]:
+        gitignore_file = os.path.join(directory, ".gitignore")
+        print(gitignore_file)
+        if not os.path.exists(gitignore_file):
+            return []
+        with open(gitignore_file, "r") as reader:
+            return list(map(lambda line: line.strip(), reader.readlines()))
+
+    def match(self, value):
+        # TODO: match
+        return value
+
+
+def get_files(directory, recursive):
+    content = list(
+        filter(
+            lambda file: os.path.isfile(file) and file.endswith(".py"),
+            os.listdir(directory),
+        )
+    )
+    gitignore = Gitignore(directory)
+    if not recursive:
+        return content
+    files = []
+    for (root, _, filename) in os.walk(directory):
+        for _file in filename:
+            path = os.path.join(root, _file)
+            if not _file.endswith(".py"):
+                continue
+            path = os.path.join(root, _file)
+            files.append(path)
+
+    return files
+
+
 def main():
     arguments = sys.argv[1:]
     command, parameters = parse_arguments(arguments)
@@ -221,11 +262,14 @@ def main():
             generate_docs([command], parameters, output_dir)
         elif os.path.isdir(command):
             # TODO: recursive
-            generate_docs(
-                list(filter(lambda file: os.path.isfile(file), os.listdir(command))),
-                parameters,
-                output_dir,
-            )
+            # print(parameters.get("recursive") == "True")
+            # generate_docs(
+            #     list(filter(lambda file: os.path.isfile(file), os.listdir(command))),
+            #     parameters,
+            #     output_dir,
+            # )
+            # print(get_files(command, parameters.get("recursive")))
+            generate_docs(get_files(command, parameters.get("recursive")), parameters)
 
 
 if __name__ == "__main__":
