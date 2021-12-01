@@ -264,7 +264,7 @@ def main():
     arguments = sys.argv[1:]
     command, parameters = parse_arguments(arguments)
     if command == "help":
-        print("Helping...")
+        pass
     else:
         if not os.path.exists(command):
             create_error(f"{command}, file not found :/")
@@ -278,6 +278,3 @@ def main():
             files = get_files(command, parameters.get("recursive"), init_only)
             generate_docs(files, parameters, init_only=init_only)
 
-
-if __name__ == "__main__":
-    main()
