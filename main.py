@@ -195,7 +195,7 @@ def generate_docs(
 
                 markdown = generate_markdown(function, result)
                 output += markdown
-            output_filename = os.path.join(docs_dir, filename.split(".")[0] + ".md")
+            output_filename = os.path.join(docs_dir, os.path.basename(filename.split(".")[:-1][-1]) + ".md")
             if os.path.exists(output_filename) and not (parameters.get("yes")):
                 overrite_file = input(
                     f"Overrite {output_filename} [y/n] "
@@ -261,16 +261,8 @@ def main():
         if os.path.isfile(command):
             generate_docs([command], parameters, output_dir)
         elif os.path.isdir(command):
-            # TODO: recursive
-            # print(parameters.get("recursive") == "True")
-            # generate_docs(
-            #     list(filter(lambda file: os.path.isfile(file), os.listdir(command))),
-            #     parameters,
-            #     output_dir,
-            # )
-            # print(get_files(command, parameters.get("recursive")))
-            generate_docs(get_files(command, parameters.get("recursive")), parameters)
-
+            files = get_files(command, parameters.get("recursive"))
+            generate_docs(files, parameters)
 
 if __name__ == "__main__":
     main()
