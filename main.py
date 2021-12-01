@@ -176,6 +176,7 @@ def generate_docs(
     files: List[str],
     parameters: Dict[str, str],
     docs_dir=os.path.join(os.getcwd(), "docs"),
+    init_only=None,
 ):
     if not os.path.isdir(docs_dir):
         os.mkdir(docs_dir)
@@ -195,7 +196,14 @@ def generate_docs(
 
                 markdown = generate_markdown(function, result)
                 output += markdown
-            output_filename = os.path.join(docs_dir, os.path.basename(filename.split(".")[:-1][-1]) + ".md")
+            if init_only:
+                docs_dir = os.path.join(
+                    docs_dir, os.path.basename(os.path.dirname(filename))
+                )
+            os.makedirs(docs_dir, exist_ok=True)
+            output_filename = os.path.join(
+                docs_dir, os.path.basename(filename.split(".")[:-1][-1]) + ".md"
+            )
             if os.path.exists(output_filename) and not (parameters.get("yes")):
                 overrite_file = input(
                     f"Overrite {output_filename} [y/n] "
@@ -225,10 +233,12 @@ class Gitignore:
         return value
 
 
-def get_files(directory, recursive):
+def get_files(directory, recursive, init_only=None):
     content = list(
         filter(
-            lambda file: os.path.isfile(file) and file.endswith(".py"),
+            lambda file: os.path.isfile(file)
+            and file.endswith(".py")
+            and (file == "__init__.py" if init_only else True),
             os.listdir(directory),
         )
     )
@@ -241,6 +251,9 @@ def get_files(directory, recursive):
             path = os.path.join(root, _file)
             if not _file.endswith(".py"):
                 continue
+            if init_only:
+                if _file != "__init__.py":
+                    continue
             path = os.path.join(root, _file)
             files.append(path)
 
@@ -261,8 +274,10 @@ def main():
         if os.path.isfile(command):
             generate_docs([command], parameters, output_dir)
         elif os.path.isdir(command):
-            files = get_files(command, parameters.get("recursive"))
-            generate_docs(files, parameters)
+            init_only = parameters.get("init-only")
+            files = get_files(command, parameters.get("recursive"), init_only)
+            generate_docs(files, parameters, init_only=init_only)
+
 
 if __name__ == "__main__":
     main()
