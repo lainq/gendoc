@@ -7,7 +7,7 @@
 ### Installation
 The package is available on pypi. You can install it with pip
 ```py
-pip install gendoc
+pip install gendoc-cli
 ```
 
 ### How to use it 🤔 ?
