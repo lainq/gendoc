@@ -70,6 +70,11 @@ class DocstringParser:
 
 
 class FunctionArgument:
+    """
+    Argument for functions, with the name
+    and the default value
+    """
+    
     def __init__(self, name, default_value):
         self.name = name
         self.default_value = default_value
@@ -143,6 +148,7 @@ def get_function_bodies(body, parent=None):
         if isinstance(node, ast.FunctionDef):
             functions.append(Function(node, parent))
         elif isinstance(node, ast.ClassDef):
+            functions.append(node)
             functions += get_function_bodies(node.body, node)
     return functions
 
@@ -188,6 +194,14 @@ def generate_docs(
 
             output = ""
             for function in functions:
+                if isinstance(function, ast.ClassDef):
+                    if function.name.startswith("_"):
+                        continue
+                    docstrings = ast.get_docstring(function)
+                    if not(docstrings and (len(function.body) > 0)):
+                        continue
+                    output += f"\n# `{function.name}`\n\n{docstrings}\n\n"
+                    continue
                 if not function.is_public:
                     continue
                 parser = DocstringParser(function.get_docstrings())
@@ -278,3 +292,5 @@ def main():
             files = get_files(command, parameters.get("recursive"), init_only)
             generate_docs(files, parameters, init_only=init_only)
 
+if __name__ == "__main__":
+    main()
