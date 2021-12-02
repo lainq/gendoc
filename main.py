@@ -74,7 +74,7 @@ class FunctionArgument:
     Argument for functions, with the name
     and the default value
     """
-    
+
     def __init__(self, name, default_value):
         self.name = name
         self.default_value = default_value
@@ -198,7 +198,7 @@ def generate_docs(
                     if function.name.startswith("_"):
                         continue
                     docstrings = ast.get_docstring(function)
-                    if not(docstrings and (len(function.body) > 0)):
+                    if not (docstrings and (len(function.body) > 0)):
                         continue
                     output += f"\n# `{function.name}`\n\n{docstrings}\n\n"
                     continue
@@ -278,7 +278,9 @@ def main():
     arguments = sys.argv[1:]
     command, parameters = parse_arguments(arguments)
     if command == "help":
-        pass
+        print(
+            "gendoc <filename> --out=<output-folder(optional)> --init-only --recursive"
+        )
     else:
         if not os.path.exists(command):
             create_error(f"{command}, file not found :/")
@@ -291,6 +293,7 @@ def main():
             init_only = parameters.get("init-only")
             files = get_files(command, parameters.get("recursive"), init_only)
             generate_docs(files, parameters, init_only=init_only)
+
 
 if __name__ == "__main__":
     main()
